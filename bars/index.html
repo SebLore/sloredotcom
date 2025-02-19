@@ -10,7 +10,14 @@
 
 <body>
     <div class="container">
-        <div class="left"></div>
+        <div class="left">
+            <details>
+                <summary>What is bubble sort</summary>
+                <p>Bubble sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent
+                    elements and swaps them if they are in the wrong order. The pass through the list is repeated until
+                    the list is sorted.</p>
+            </details>
+        </div>
         <div class="middle">
             <h1>Bubble Sort</h1>
             <canvas id="glCanvas" width="600" height="400"></canvas>
@@ -28,16 +35,12 @@
                     <input type="range" min="1" max="2000" value="100" id="speedControl">
                 </div>
             </div>
-            <details>
-                <summary>What is bubble sort</summary>
-                <p>Bubble sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent
-                    elements and swaps them if they are in the wrong order. The pass through the list is repeated until
-                    the list is sorted.</p>
-            </details>
 
         </div>
     </div>
 </body>
+<script id="vertex-shader" type="x-shader/x-vertex" data-shader-path="./glsl/vertexShader.glsl"></script>
+<script id="fragment-shader" type="x-shader/x-fragment" data-shader-path="./glsl/fragmentShader.glsl"></script>
 <script src="main.js"></script>
 
 </html>

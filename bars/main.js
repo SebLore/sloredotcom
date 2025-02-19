@@ -1,27 +1,5 @@
-class Vertex {
-    constructor(x, y, color) {
-        this.position = { x, y };  // Position in 2D space
-        this.color = color;         // Color as a vec4 (RGBA)
-    }
-
-    getPosition() {
-        return [this.position.x, this.position.y];
-    }
-
-    getColor() {
-        return this.color;
-    }
-
-    setColor(color) {
-        this.color = color;
-    }
-
-    setPosition(x, y) {
-        this.position = { x, y };
-    }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
+    // Set up WebGL
     const canvas = document.getElementById("glCanvas");
     if (!canvas) {
         console.log("Canvas not found, cannot render content.");
@@ -34,14 +12,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    let program; // Declare program globally
+    let n = 50; // Default number of bars
+    const minHeight = -0.9; // Minimum height of bars
+    const maxHeight = 0.9; // Maximum height of bars
+    let speed = 2000; // Animation speed (initial value)
+
+    // Initialize bars array globally
+    let bars = [];
+
     async function loadShaderSource(url) {
         const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`Failed to load shader: ${url}`);
+            return null;
+        }
         return await response.text();
     }
 
     async function initializeShaders() {
-        const vertexShaderSource = await loadShaderSource("vertexShader.glsl");
-        const fragmentShaderSource = await loadShaderSource("fragmentShader.glsl");
+        const vertexShaderPath = document.getElementById("vertex-shader").getAttribute("data-shader-path");
+        const fragmentShaderPath = document.getElementById("fragment-shader").getAttribute("data-shader-path");
+
+        const vertexShaderSource = await loadShaderSource(vertexShaderPath);
+        const fragmentShaderSource = await loadShaderSource(fragmentShaderPath);
 
         if (!vertexShaderSource || !fragmentShaderSource) {
             console.error("Error loading shader sources.");
@@ -51,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
         const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-        const program = gl.createProgram();
+        program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
@@ -64,8 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gl.useProgram(program);
 
         setUpAttributesAndBuffers(program);
-
-        draw();
+        drawBars();  // Call drawBars only after the shaders are initialized
     }
 
     function createShader(gl, type, source) {
@@ -85,52 +78,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const positionAttribLocation = gl.getAttribLocation(program, "a_position");
         const colorAttribLocation = gl.getAttribLocation(program, "a_color");
 
+        const { vertices, colors, indices } = getBarVertices();
+
+        // Position buffer
         const positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);  // GL_STATIC_DRAW
         gl.enableVertexAttribArray(positionAttribLocation);
         gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
+        // Color buffer
         const colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), GL_STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);  // GL_STATIC_DRAW
         gl.enableVertexAttribArray(colorAttribLocation);
         gl.vertexAttribPointer(colorAttribLocation, 4, gl.FLOAT, false, 0, 0);
+
+        // Index buffer (for drawElements)
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     }
 
     function draw() {
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0); // Use drawElements
+        const { indices } = getBarVertices();
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0); // Use drawElements
     }
-
-    // Initialize everything
-    initializeShaders();
-
-    var n = 50; // Number of bars
-    const minHeight = -0.9; // Minimum height of bars
-    const maxHeight = 0.9; // Maximum height of bars
-    var speed = document.getElementById("speedControl").value; // Animation speed
-    let bars = [];
-    let currentBar = -1;
-
-    // Generate bars
-    for (let i = 0; i < n; i++) {
-        let normalizedHeight = i / (n - 1);
-        let color = [0.3, 0.3, 0.3, 1.0]; // gray
-        bars.push({
-            height: minHeight + normalizedHeight * (maxHeight - minHeight),
-            color: color
-        });
-    }
-
-    // Shuffle bars using Fisher-Yates shuffle
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-    shuffle(bars);
 
     function getBarVertices() {
         let vertices = [];
@@ -153,15 +127,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 x + barWidth, height // Top right
             );
 
+            // Assign color to each vertex (6 vertices per bar)
             colors.push(...Array(6).fill(bar.color).flat());
 
             // Define indices for two triangles per bar
-            const baseIndex = i * 4;
-            indices.push(baseIndex, baseIndex + 1, baseIndex + 2, baseIndex + 2, baseIndex + 1, baseIndex + 3);
+            const baseIndex = i * 6; // Each bar has 6 indices (2 triangles)
+            indices.push(baseIndex, baseIndex + 1, baseIndex + 2, baseIndex + 3, baseIndex + 4, baseIndex + 5);
         });
 
         return { vertices: new Float32Array(vertices), colors: new Float32Array(colors), indices: new Uint16Array(indices) };
     }
+
 
     function drawBars() {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -169,18 +145,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const { vertices, colors, indices } = getBarVertices();
 
-        // Bind position buffer
+        // Position buffer
         const positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.GL_STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW); // GL_STATIC_DRAW
         const positionAttribLocation = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionAttribLocation);
         gl.vertexAttribPointer(positionAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // Bind color buffer
+        // Color buffer
         const colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, GL_STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW); // GL_STATIC_DRAW
         const colorAttribLocation = gl.getAttribLocation(program, "a_color");
         gl.enableVertexAttribArray(colorAttribLocation);
         gl.vertexAttribPointer(colorAttribLocation, 4, gl.FLOAT, false, 0, 0);
@@ -188,13 +164,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // Create and bind the index buffer
         const indexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW());
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
         // Draw the bars using the index buffer
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
     }
-
-    drawBars();
 
     // Bubble Sort Animation
     window.bubbleSort = async function bubbleSort() {
@@ -214,7 +188,32 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Bubble Sort completed");
     };
 
-    // controls
+    // Initialize bars array
+    function initializeBars() {
+        for (let i = 0; i < n; i++) {
+            let normalizedHeight = i / (n - 1);
+            let color = [0.3, 0.3, 0.3, 1.0]; // gray
+            bars.push({
+                height: minHeight + normalizedHeight * (maxHeight - minHeight),
+                color: color
+            });
+        }
+    }
+
+    // Shuffle bars using Fisher-Yates shuffle
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // Initialize everything
+    initializeBars();
+    shuffle(bars);
+    initializeShaders();
+
+    // Controls
     var speedControl = document.getElementById("speedControl");
     if (speedControl) {
         speedControl.addEventListener("input", (event) => {
@@ -239,13 +238,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (newCount >= 10 && newCount <= 2000) {
             n = newCount;
             bars = [];
-            for (let i = 0; i < n; i++) {
-                let normalizedHeight = i / (n - 1);
-                bars.push({ height: -1.0 + normalizedHeight * (0.9 - (-1.0)), color: [0.3, 0.3, 0.3, 1.0] });
-            }
+            initializeBars();
             shuffle(bars);
             drawBars();
         }
     });
-
 });
