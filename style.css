@@ -1,0 +1,220 @@
+/* main style doc */
+
+:root {
+    /* custom properties*/
+
+    /* FONTS */
+    --main-font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+
+    /* COLORS */
+    --main-bg-color: #f5f5f5;
+    --main-font-color: #333;
+    --main-font-color-light: #666;
+    --h1-color: #007bff;
+    --h1-color-light: #0056b3;
+    --h2-color: #007bff;
+    --h2-color-light: #0056b3;
+    --h3-color: #007bff;
+    --h3-color-light: #0056b3;
+
+
+    /* links */
+    --main-link-color: #007bff;
+    --main-link-hover-color: #0056b3;
+    --main-link-visited-color: #0056b3;
+    --main-link-visited-hover-color: #0056b3;
+
+    /* sizes */
+    --main-max-width: clamp(1200px, 90%, 1400px);
+    --main-font-size: 16px;
+}
+
+/* if user prefers dark mode */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* background colors */
+        --main-bg-color: #333;
+
+        /* font colors */
+        --main-font-color: #f5f5f5;
+        --main-font-color-light: #ccc;
+
+        /* link colors */
+        --main-link-color: #e810e8;
+        --main-link-hover-color: #ff00ff;
+        --main-link-visited-color: #ac26ac;
+        --main-link-visited-hover-color: #db14db;
+
+        /* header colors */
+        --h1-color: #e810e8;
+        --h1-color-light: #ff00ff;
+        --h2-color: #e810e8;
+        --h2-color-light: #ff00ff;
+        --h3-color: #e810e8;
+        --h3-color-light: #ff00ff;
+
+    }
+}
+
+/* phone or tablet */
+@media (max-width: 768px) {
+    :root {
+        --main-max-width: 100%;
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: var(--main-font-size);
+    text-rendering: optimizeLegibility;
+    -moz-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--main-font-family);
+}
+
+/* established types and classes */
+body {
+    background-color: var(--main-bg-color);
+    color: var(--main-font-color);
+    margin: 0;
+    padding: 20px;
+    font-size: var(--main-font-size);
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+a {
+    color: var(--main-link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--main-link-hover-color);
+}
+
+span {
+    color: var(--main-font-color-light);
+    font-style: inherit;
+    font-weight: inherit;
+}
+
+/* custom types and classes */
+
+/* 
+* generic flexbox container
+ */
+.container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+
+
+    max-width: var(--main-max-width);
+    margin: auto;
+    overflow: hidden;
+}
+
+.navBar {
+    z-index: 2;
+    display: grid;
+    grid-template-columns: [start] 1.5fr [logo-end] 2.5fr [menu-start] 2fr [menu-end] 3fr [social-start] 1fr [social-end];
+    grid-template-rows: 60px;
+    padding: 1em;
+    color: white;
+    background: rgba(0, 0, 0, 0.2);
+    font-family: montserrat;
+}
+
+.menuItems {
+    z-index: 2;
+    grid-column: menu-start/menu-end;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    align-self: center;
+    justify-self: center;
+    align-content: center;
+    justify-content: center;
+    font-family: montserrat-bold;
+    font-size: larger;
+}
+
+.tooltip .tooltiptext {
+    z-index: 2;
+    visibility: hidden;
+    width: 120px;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 2px 0;
+    position: absolute;
+    z-index: 1;
+    top: 80%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+.sidebar {
+    background-color: var(--main-bg-color);
+    color: var(--main-font-color);
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h3 {
+    color: var(--h3-color);
+}
+
+.card {
+    background-color: var(--main-bg-color);
+    color: var(--main-font-color);
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.card.content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.logo img {
+    width: 100%;
+    height: auto;
+    max-width: 60px;
+    max-height: 60px;
+}
+
+
+/* media specific changes */
+
+@media screen and (max-width: 1600px) {
+    .navbar {
+        grid-template-columns: [start] 1fr [logo-end] 1fr [menu-start] 1fr [menu-end];
+    }
+
+    .tooltip .tooltiptext {
+        top: -100%;
+    }
+}
+
+@media screen and (max-height: 1000px) {
+    .navbar {
+        display: grid;
+    }
+}
